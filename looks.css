@@ -1,0 +1,91 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    font-family: "Courier New", Courier, monospace;
+    padding: 0 2ch;
+    overflow-y: hidden;
+    display: flex;
+    flex-flow: column nowrap;
+    align-items: stretch;
+}
+progress {
+    min-width: 100%;
+}
+nav {
+    background-color: dimgray;
+    color: ghostwhite;
+    padding: 1ch;
+}
+section {
+    background-color: lavender;
+    display: grid;
+    grid-template-areas: "a a a a" "a a a a" "a a a a" "a a a a" "a a a a";
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: minmax(12vh, auto);
+    padding: 0 2ch;
+}
+div.dropD {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+div.dropD::before {
+    content: "";
+    position: absolute;
+    width: 52px;
+    height: 39px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: darkgray;
+    border-radius: 0.32em;
+}
+figure {
+    position: relative;
+}
+figure::after, figure.show::after {
+    content: "";
+    position: absolute;
+    display: block;
+    width: 100%;
+    height: 100%;
+    transform: translate(0%, -100%);
+}
+figure::before {
+    content: attr(data-flash);
+    position: absolute;
+    left: 50%;
+    color: transparent;
+    transform: translate(-50%, -50%);
+}
+figure.show::before {
+    color: inherit;
+    animation: flash 600ms ease-out 1;
+}
+@keyframes flash {
+    100% {
+        transform: translate(-50%, -75%);
+    }
+}
+img {
+    display: block;
+    width: 64px;
+    height: 48px;
+}
+footer {
+    background-color: cornflowerblue;
+    padding: 1ch;
+    display: flex;
+    justify-content: space-evenly;
+}
+button {
+    padding: 0.32em 1ch;
+}
+button::after {
+    content: attr(data-req);
+    padding-left: 0.5ch;
+}
