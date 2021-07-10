@@ -47,7 +47,7 @@ div.dropD::before {
 figure {
     position: relative;
 }
-figure::after, figure.show::after {
+figure::after {
     content: "";
     position: absolute;
     display: block;
@@ -68,7 +68,7 @@ figure.show::before {
 }
 @keyframes flash {
     100% {
-        transform: translate(-50%, -75%);
+        transform: translate(-50%, -80%);
     }
 }
 img {
