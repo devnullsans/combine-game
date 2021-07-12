@@ -21,10 +21,11 @@ nav {
 }
 section {
     background-color: lavender;
+    flex: 1 1 100%;
     display: grid;
     grid-template-areas: "a a a a" "a a a a" "a a a a" "a a a a" "a a a a";
     grid-template-columns: repeat(4, 1fr);
-    grid-auto-rows: minmax(12vh, auto);
+    grid-auto-rows: 15vh;
     padding: 0 2ch;
 }
 div.dropD {
