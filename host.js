@@ -7,10 +7,7 @@ const Route = process.env?.SCAN ?? process.argv[2] ?? process.cwd();
 
 load(Route);
 
-const Server = http.createServer(serve).listen({
-  host: /*'0.0.0.0'*/'localhost',
-  port: 8080
-}, function() {
+const Server = http.createServer(serve).listen(8080, function() {
   console.log('Server is up:', Server.address());
   console.log(Route, JSON.stringify(Object.getOwnPropertyNames(Data), null, 2));
 });
