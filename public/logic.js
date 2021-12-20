@@ -135,6 +135,8 @@ function onDrop(ev) {
         });
 }
 
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').then(reg => console.log('service worker registered', reg)).catch(e => console.log('failed to register service worker', e));
+
 let heldI = null;
 const gameState = initState();
 initStatic();
