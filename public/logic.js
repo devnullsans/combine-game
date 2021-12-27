@@ -8,131 +8,136 @@ const trails = ['M', 'B', 'T', 'Qd', 'Qn', 'Sx', 'Sp', 'O', 'N', 'D', 'Ud', 'Dd'
 const currency = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 });
 
 function initState() {
-    const [value, data] = JSON.parse(localStorage.getItem('save')) ??
-        [{ coins: 0, level: 0, next: 1000, less: 20000, time: 6000, running: 0, spawnID: -1, countID: -1, refresh: 50 }, []];
-    dropD.forEach((div, ind) => {
-        if (data[ind]) newBin(Number(data[ind]), div);
-        div.onanimationend = onAnimationEnd;
-        div.ondragover = onDragOver;
-        div.ondrop = onDrop;
-    });
-    return value;
+	const [value, data] = JSON.parse(localStorage.getItem('save')) ??
+		[{ coins: 0, level: 0, next: 1000, less: 20000, time: 6000, running: 0, spawnID: 0, countID: 0, refresh: 10 }, []];
+	dropD.forEach((div, ind) => {
+		if (data[ind]) newBin(Number(data[ind]), div);
+		div.onanimationend = onAnimationEnd;
+		div.ondragover = onDragOver;
+		div.ondrop = onDrop;
+	});
+	return value;
 }
 function initStatic() {
-    timerP.max = gameState.time;
-    timerP.value = gameState.running;
-    buttonL.dataset.req = moneyFormat(gameState.next);
-    buttonL.onclick = onClickLevel;
-    buttonT.dataset.req = moneyFormat(gameState.less);
-    buttonT.onclick = onClickTimer;
-    gameState.spawnID = setInterval(onSpawnTick, gameState.refresh);
-    gameState.countID = setInterval(onCountTick, 1000);
-    requestAnimationFrame(updateTimer);
-    onbeforeunload = onBeforeUnload;
+	if (gameState.level >= 114) {
+		buttonL.disabled = true;
+		buttonL.dataset.req = 'MAX';
+	} else {
+		buttonL.onclick = onClickLevel;
+		buttonL.dataset.req = moneyFormat(gameState.next);
+	}
+	if (gameState.time <= 1000) {
+		buttonT.disabled = true;
+		buttonT.dataset.req = 'MAX';
+	} else {
+		buttonT.onclick = onClickTimer;
+		buttonT.dataset.req = moneyFormat(gameState.less);
+	}
+	timerP.max = gameState.time;
+	timerP.value = gameState.running;
+	gameState.countID = setInterval(onCountTick, 1000);
+	gameState.spawnID = requestAnimationFrame(onSpawnTick);
+	onbeforeunload = onBeforeUnload;
 }
 function moneyFormat(value) {
-    const amount = currency.format(value);
-    const blocks = amount.split(',');
-    if (blocks.length < 3) return amount;
-    else return blocks[0].concat('.', blocks[1], trails[blocks.length - 3]);
+	const amount = currency.format(value);
+	const blocks = amount.split(',');
+	if (blocks.length < 3) return amount;
+	else return blocks[0].concat('.', blocks[1], trails[blocks.length - 3]);
 }
 function newBin(level, div = null) {
-    const img = document.createElement('img');
-    img.setAttribute('src', tempMap[level]);
-    img.setAttribute('alt', level);
-    const figure = document.createElement('figure');
-    figure.setAttribute('id', (Math.random() * 36 | 0).toString(36) + performance.now().toString(36) + (Math.random() * 36 | 0).toString(36));
-    figure.setAttribute('data-flash', moneyFormat(3 ** level));
-    figure.setAttribute('draggable', true);
-    figure.ondragstart = onDragStart;
-    figure.appendChild(img);
-    if (div) div.appendChild(figure);
-    else heldI = figure;
+	const img = document.createElement('img');
+	img.setAttribute('src', tempMap[level]);
+	img.setAttribute('alt', level);
+	const figure = document.createElement('figure');
+	figure.setAttribute('id', (Math.random() * 36 | 0).toString(36) + performance.now().toString(36) + (Math.random() * 36 | 0).toString(36));
+	figure.setAttribute('data-flash', moneyFormat(3 ** level));
+	figure.setAttribute('draggable', true);
+	figure.ondragstart = onDragStart;
+	figure.appendChild(img);
+	if (div) div.appendChild(figure);
+	else heldI = figure;
 }
 function addBin() {
-    const empty = dropD.find(div => div.childElementCount == 0);
-    if (empty) {
-        empty.appendChild(heldI);
-        heldI = null;
-        return true;
-    } else return false;
+	const empty = dropD.find(div => div.childElementCount == 0);
+	if (empty) {
+		empty.appendChild(heldI);
+		heldI = null;
+		return true;
+	} else return false;
 }
 function onSpawnTick() {
-    if (gameState.running >= gameState.time) {
-        gameState.running = 0;
-        newBin(gameState.level);
-        if (!addBin()) clearInterval(gameState.spawnID);
-    } else {
-        gameState.running += gameState.refresh;
-    }
+	if (gameState.running >= gameState.time) {
+		timerP.value = gameState.running = 0;
+		newBin(gameState.level);
+		if (!addBin()) return cancelAnimationFrame(gameState.spawnID);
+	} else {
+		timerP.value = gameState.running += gameState.refresh;
+	}
+	gameState.spawnID = requestAnimationFrame(onSpawnTick);
 }
 function onCountTick() {
-    const sum = dropD.reduce((tot, div) => (div.firstElementChild?.classList.toggle('show') ? 3 ** div.firstElementChild.firstElementChild.alt + tot : tot), 0);
-    total.textContent = moneyFormat(gameState.coins += sum);
+	const sum = dropD.reduce((tot, div) => (div.firstElementChild?.classList.toggle('show') ? 3 ** div.firstElementChild.firstElementChild.alt + tot : tot), 0);
+	total.textContent = moneyFormat(gameState.coins += sum);
 }
 function onClickLevel(ev) {
-    if (gameState.coins >= gameState.next) {
-        const level = ++gameState.level;
-        total.textContent = moneyFormat(gameState.coins -= gameState.next);
-        if (level == 114) {
-            ev.target.disabled = true;
-            ev.target.dataset.req = 'MAX';
-        } else ev.target.dataset.req = moneyFormat(gameState.next *= 2);
-        dropD.filter(div => div.childElementCount > 0 && div.firstElementChild.firstElementChild.alt < level).forEach(div => {
-            div.firstElementChild.firstElementChild.alt = level;
-            div.firstElementChild.firstElementChild.src = tempMap[level];
-            div.firstElementChild.dataset.flash = moneyFormat(3 ** level);
-        });
-        if (heldI) {
-            heldI.firstElementChild.alt = level;
-            heldI.firstElementChild.src = tempMap[level];
-            heldI.dataset.flash = moneyFormat(3 ** level);
-        }
-    }
+	if (gameState.coins >= gameState.next) {
+		const level = ++gameState.level;
+		total.textContent = moneyFormat(gameState.coins -= gameState.next);
+		if (level == 114) {
+			ev.target.disabled = true;
+			ev.target.dataset.req = 'MAX';
+		} else ev.target.dataset.req = moneyFormat(gameState.next *= 2);
+		dropD.filter(div => div.childElementCount > 0 && div.firstElementChild.firstElementChild.alt < level).forEach(div => {
+			div.firstElementChild.firstElementChild.alt = level;
+			div.firstElementChild.firstElementChild.src = tempMap[level];
+			div.firstElementChild.dataset.flash = moneyFormat(3 ** level);
+		});
+		if (heldI) {
+			heldI.firstElementChild.alt = level;
+			heldI.firstElementChild.src = tempMap[level];
+			heldI.dataset.flash = moneyFormat(3 ** level);
+		}
+	}
 }
 function onClickTimer(ev) {
-    if (gameState.coins >= gameState.less) {
-        timerP.max = gameState.time -= 100;
-        total.textContent = moneyFormat(gameState.coins -= gameState.less);
-        if (gameState.time == 2000) {
-            ev.target.disabled = true;
-            ev.target.dataset.req = 'MAX';
-        } else ev.target.dataset.req = moneyFormat(gameState.less *= 4);
-    }
-}
-function updateTimer() {
-    timerP.value = gameState.running;
-    requestAnimationFrame(updateTimer);
+	if (gameState.coins >= gameState.less) {
+		timerP.max = gameState.time -= 100;
+		total.textContent = moneyFormat(gameState.coins -= gameState.less);
+		if (gameState.time == 1000) {
+			ev.target.disabled = true;
+			ev.target.dataset.req = 'MAX';
+		} else ev.target.dataset.req = moneyFormat(gameState.less *= 4);
+	}
 }
 function onBeforeUnload() {
-    gameState.spawnID = gameState.countID = clearInterval(gameState.spawnID) ?? clearInterval(gameState.countID) ?? -1;
-    localStorage.setItem('save', JSON.stringify([gameState, dropD.map(div => div.firstElementChild?.firstElementChild.alt ?? '')]));
+	gameState.spawnID = gameState.countID = cancelAnimationFrame(gameState.spawnID) ?? clearInterval(gameState.countID) ?? 0;
+	localStorage.setItem('save', JSON.stringify([gameState, dropD.map(div => div.firstElementChild?.firstElementChild.alt ?? '')]));
 }
 function onAnimationEnd(ev) {
-    ev.srcElement.classList.remove('show');
+	ev.srcElement.classList.remove('show');
 }
 function onDragOver(ev) {
-    ev.preventDefault();
-    ev.dataTransfer.dropEffect = 'move';
+	ev.preventDefault();
+	ev.dataTransfer.dropEffect = 'move';
 }
 function onDragStart(ev) {
-    ev.dataTransfer.clearData();
-    ev.dataTransfer.setData('text', ev.target.id);
-    ev.dataTransfer.effectAllowed = 'move';
+	ev.dataTransfer.clearData();
+	ev.dataTransfer.setData('text', ev.target.id);
+	ev.dataTransfer.effectAllowed = 'move';
 }
 function onDrop(ev) {
-    ev.preventDefault();
-    const img = document.getElementById(ev.dataTransfer.getData('text'));
-    const tag = ev.target;
-    if (tag.tagName == 'DIV' && tag.childElementCount == 0) ev.target.appendChild(img);
-    if (tag.tagName == 'FIGURE' && tag.id != img.id && tag.firstElementChild.alt == img.firstElementChild.alt)
-        requestAnimationFrame(() => {
-            const num = ++tag.firstElementChild.alt;
-            img.parentElement.removeChild(img);
-            tag.firstElementChild.src = tempMap[num];
-            tag.dataset.flash = moneyFormat(3 ** num);
-            if (heldI && addBin()) gameState.spawnID = setInterval(onSpawnTick, gameState.refresh);
-        });
+	ev.preventDefault();
+	const img = document.getElementById(ev.dataTransfer.getData('text'));
+	const tag = ev.target;
+	if (tag.tagName == 'DIV' && tag.childElementCount == 0) ev.target.appendChild(img);
+	if (tag.tagName == 'FIGURE' && tag.id != img.id && tag.firstElementChild.alt == img.firstElementChild.alt) {
+		const num = ++tag.firstElementChild.alt;
+		img.parentElement.removeChild(img);
+		tag.firstElementChild.src = tempMap[num];
+		tag.dataset.flash = moneyFormat(3 ** num);
+		if (heldI && addBin()) gameState.spawnID = requestAnimationFrame(onSpawnTick);
+	}
 }
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').then(reg => console.log('service worker registered', reg)).catch(e => console.log('failed to register service worker', e));
