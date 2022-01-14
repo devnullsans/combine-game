@@ -77,8 +77,9 @@ function onSpawnTick() {
 	gameState.spawnID = requestAnimationFrame(onSpawnTick);
 }
 function onCountTick() {
-	const sum = dropD.reduce((tot, div) => (div.firstElementChild?.classList.toggle('show') ? 3 ** div.firstElementChild.firstElementChild.alt + tot : tot), 0);
+	const sum = dropD.reduce((tot, div) => (div.firstElementChild?.classList.toggle('show') ? 3 ** Number(div.firstElementChild.firstElementChild.alt) + tot : tot), 0);
 	total.textContent = moneyFormat(gameState.coins += sum);
+	console.log(`Rate: ${sum} / sec.`);
 }
 function onClickLevel(ev) {
 	if (gameState.coins >= gameState.next) {
